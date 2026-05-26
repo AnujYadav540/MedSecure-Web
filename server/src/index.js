@@ -54,28 +54,35 @@ if (!fs.existsSync(tempDir)) {
 
 // Connect to MongoDB with graceful fallback and retry
 const connectDB = async (retryCount = 0) => {
-  const maxRetries = 3;
-  const retryDelay = 3000; // 3 seconds
+  const maxRetries = 5;
+  const retryDelay = 5000; // 5 seconds
   
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/medsecure', {
+    const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/medsecure';
+    console.log('Attempting MongoDB connection...');
+    
+    await mongoose.connect(mongoURI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000
+      serverSelectionTimeoutMS: 10000, // Increased to 10 seconds
+      socketTimeoutMS: 45000,
+      family: 4 // Force IPv4
     });
-    console.log('Connected to MongoDB');
+    
+    console.log('✅ Connected to MongoDB successfully');
     
     // Start cleanup job ONLY after successful MongoDB connection
     const { startCleanupJob } = require('./utils/cleanupUnverifiedAccounts');
     startCleanupJob();
   } catch (err) {
-    console.warn('MongoDB connection failed:', err.message);
+    console.error('❌ MongoDB connection failed:', err.message);
     
     if (retryCount < maxRetries) {
-      console.log(`Retrying connection in ${retryDelay/1000} seconds... (attempt ${retryCount + 1}/${maxRetries})`);
+      console.log(`🔄 Retrying connection in ${retryDelay/1000} seconds... (attempt ${retryCount + 1}/${maxRetries})`);
       setTimeout(() => connectDB(retryCount + 1), retryDelay);
     } else {
-      console.log('Max retries reached. Server will run without database functionality');
+      console.error('⚠️  Max retries reached. Server will run without database functionality');
+      console.error('⚠️  Please check your MONGODB_URI environment variable');
     }
   }
 };
