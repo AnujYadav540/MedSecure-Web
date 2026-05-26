@@ -59,7 +59,10 @@ const connectDB = async (retryCount = 0) => {
   
   try {
     const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/medsecure';
-    console.log('Attempting MongoDB connection...');
+    
+    // Log connection attempt (hide password for security)
+    const safeURI = mongoURI.replace(/\/\/([^:]+):([^@]+)@/, '//$1:****@');
+    console.log('Attempting MongoDB connection to:', safeURI);
     
     await mongoose.connect(mongoURI, {
       useNewUrlParser: true,
@@ -77,12 +80,20 @@ const connectDB = async (retryCount = 0) => {
   } catch (err) {
     console.error('❌ MongoDB connection failed:', err.message);
     
+    // Additional diagnostic info
+    if (err.message.includes('ENOTFOUND') || err.message.includes('querySrv')) {
+      console.error('💡 DNS lookup failed. Please verify:');
+      console.error('   1. Your MongoDB Atlas cluster hostname is correct');
+      console.error('   2. The MONGODB_URI environment variable is set correctly');
+      console.error('   3. Your network allows DNS SRV lookups');
+    }
+    
     if (retryCount < maxRetries) {
       console.log(`🔄 Retrying connection in ${retryDelay/1000} seconds... (attempt ${retryCount + 1}/${maxRetries})`);
       setTimeout(() => connectDB(retryCount + 1), retryDelay);
     } else {
       console.error('⚠️  Max retries reached. Server will run without database functionality');
-      console.error('⚠️  Please check your MONGODB_URI environment variable');
+      console.error('⚠️  Please check your MONGODB_URI environment variable in Render');
     }
   }
 };
