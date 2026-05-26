@@ -23,10 +23,8 @@ services:
         sync: false
 
   # Frontend React App
-  - type: web
+  - type: static
     name: medsecure-client
-    env: static
-    plan: free
     buildCommand: cd client && npm install && npm run build
     staticPublishPath: ./client/build
     routes:
