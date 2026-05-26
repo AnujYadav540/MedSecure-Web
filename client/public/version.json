@@ -1,0 +1,6 @@
+{
+  "version": "1.0.3",
+  "buildDate": "2026-05-23T08:00:00.000Z",
+  "criticalUpdate": true,
+  "message": "CRITICAL FIX: Access logging now works - HARD REFRESH REQUIRED (Ctrl+Shift+R)"
+}
