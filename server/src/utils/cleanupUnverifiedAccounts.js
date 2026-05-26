@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const mongoose = require('mongoose');
 
 /**
  * Cleanup unverified accounts with expired OTPs
@@ -6,6 +7,12 @@ const User = require('../models/User');
  */
 async function cleanupUnverifiedAccounts() {
   try {
+    // Check if MongoDB is connected
+    if (mongoose.connection.readyState !== 1) {
+      console.log('⏸️  Skipping cleanup - MongoDB not connected');
+      return 0;
+    }
+
     const now = new Date();
     
     // Find and delete users who:
@@ -22,7 +29,7 @@ async function cleanupUnverifiedAccounts() {
 
     return result.deletedCount;
   } catch (error) {
-    console.error('❌ Error cleaning up unverified accounts:', error);
+    console.error('❌ Error cleaning up unverified accounts:', error.message);
     return 0;
   }
 }

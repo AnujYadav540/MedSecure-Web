@@ -64,6 +64,10 @@ const connectDB = async (retryCount = 0) => {
       serverSelectionTimeoutMS: 5000
     });
     console.log('Connected to MongoDB');
+    
+    // Start cleanup job ONLY after successful MongoDB connection
+    const { startCleanupJob } = require('./utils/cleanupUnverifiedAccounts');
+    startCleanupJob();
   } catch (err) {
     console.warn('MongoDB connection failed:', err.message);
     
@@ -106,10 +110,6 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-
-// Start cleanup job for unverified accounts
-const { startCleanupJob } = require('./utils/cleanupUnverifiedAccounts');
-startCleanupJob();
 
 // Check if port is in use and handle gracefully
 const server = app.listen(PORT, () => {
